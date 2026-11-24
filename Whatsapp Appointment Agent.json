@@ -1,5 +1,5 @@
 {
-  "name": "Dr. Appointment",
+  "name": "WhatsApp Appointment Agent",
   "nodes": [
     {
       "parameters": {
@@ -18,14 +18,7 @@
         2064,
         592
       ],
-      "typeVersion": 1.2,
-      "credentials": {
-        "openAiApi": {
-          "id": null,
-          "name": "",
-          "__aiGatewayManaged": true
-        }
-      }
+      "typeVersion": 1.2
     },
     {
       "parameters": {},
@@ -67,7 +60,6 @@
         256,
         544
       ],
-      "webhookId": "ab09ca3e-53b2-4079-9ddc-bccb2f69551b",
       "typeVersion": 1
     },
     {
@@ -83,14 +75,7 @@
         1456,
         624
       ],
-      "typeVersion": 1.8,
-      "credentials": {
-        "openAiApi": {
-          "id": null,
-          "name": "",
-          "__aiGatewayManaged": true
-        }
-      }
+      "typeVersion": 1.8
     },
     {
       "parameters": {
@@ -105,7 +90,6 @@
         1008,
         624
       ],
-      "webhookId": "bbe62f3d-8788-49d4-aae6-9e9411446d44",
       "typeVersion": 1
     },
     {
@@ -193,7 +177,7 @@
     {
       "parameters": {
         "operation": "send",
-        "phoneNumberId": "1070717739466842",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
         "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
         "textBody": "={{ $json.output }}",
         "additionalFields": {}
@@ -205,24 +189,23 @@
         3040,
         592
       ],
-      "webhookId": "23834751-5066-48ba-8e19-549680df2b27",
       "typeVersion": 1
     },
     {
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "1_8IMhLnATT6TIZ5LUQNoMzgu-rd_4famPwmEdWPjGFs",
+          "value": "",
           "mode": "list",
-          "cachedResultName": "Appointment",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_8IMhLnATT6TIZ5LUQNoMzgu-rd_4famPwmEdWPjGFs/edit?usp=drivesdk"
+          "cachedResultName": "",
+          "cachedResultUrl": ""
         },
         "sheetName": {
           "__rl": true,
-          "value": "gid=0",
+          "value": "",
           "mode": "list",
-          "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_8IMhLnATT6TIZ5LUQNoMzgu-rd_4famPwmEdWPjGFs/edit#gid=0"
+          "cachedResultName": "",
+          "cachedResultUrl": ""
         },
         "options": {}
       },
@@ -240,7 +223,7 @@
         "promptType": "define",
         "text": "=Text: {{ $json.text }}\nVoice_Text: {{ $json.audio_text }}\n\n\n",
         "options": {
-          "systemMessage": "##Role & Personality##\n\n\n##Language & Modality Rules##\n\nText Input: If the patient sends a text message, you MUST reply with a TEXT message in Roman Urdu.\n\nAudio/Voice Input: If the patient sends a voice note, you MUST reply with an AUDIO/VOICE message in Urdu.\n\nStrict Constraint: Never mix these up. Never reply with text when the user specifically sent an audio/voice message.\n\n\nGreeting\nAt the start of every NEW conversation, send exactly this (in Roman Urdu text or Urdu audio, matching their input type):\n\"Assalam o Alaikum 👋 kiya haal ha apka. Kya aap appointment book karna chahte hain, ya main kisi aur tarah apki madad karoon?\"\nNever repeat this greeting in the same conversation.\n\n##Core Directives##\n\nNever double-book a slot.\n\nAlways get explicit patient confirmation before executing any booking, cancellation, or rescheduling action.\n\nAddress the patient by name once known.\n\nNever mention tool names, Google Sheets, databases, workflows, or system internals.\n\nNever call a tool speculatively. Call it only when the required parameters are gathered.\n\n##Data Mapping & Requirements##\n\nAppointments Data: You will interact with an Appointments database that tracks Appointment_id, Patient_Name, Phone, Doctor_Name, Date, Slot_Time, Status, Reason, and Confirmed.\n\nDoctor Schedule Data: You will verify availability against a schedule that tracks Doctor_name, Day, Start_time, End_time, Slot Duration, Max_Patient_Per_Slot, and Active status.\n\n##Full Booking Logic (Strict Step-by-Step)##\n\nCollect Requirements: Ask the patient for their Patient_Name, Phone, preferred Date, and a brief Reason for the visit. Ask for the Doctor_Name if the clinic has multiple doctors, otherwise assume the default. Do not ask for a time slot yet.\n\nFetch Doctor Schedule: Use the Doctor Timing tool for the requested Date's day of the week (e.g., Monday). Check that the doctor is marked Active (Yes). Note the exact Start_time, End_time, Slot Duration (e.g., 20 Minutes), and Max_Patient_Per_Slot (e.g., 3).\n\nGenerate & Validate Slots: Calculate the available slots sequentially from the Start_time adding the Slot Duration each time until the End_time. Use the Get All Appointments tool to check existing bookings for that exact Date and Doctor_Name.\n\nDetermine Availability: A slot is ONLY available if the count of existing appointments for that specific Slot_Time is strictly less than the Max_Patient_Per_Slot limit.\n\nPresent Options: Offer the patient the nearest 2 to 3 available slots in Roman Urdu text or Urdu audio. Wait for their selection. Never book automatically.\n\nConfirm: Once they select a slot, show a brief summary of the booking (Patient_Name, Doctor_Name, Date, Slot_Time, Reason) and ask for final confirmation (e.g., \"Kya main yeh appointment final kar doon?\").\n\nExecute & Notify: After confirmation, use the Appointment tool to save the record, setting Status to Confirmed. Send a final confirmation message to the patient.\n\n##Cancellation Flow##\n\nAsk for the patient's Patient_Name and Phone.\n\nUse Get All Appointments to find the active booking.\n\nShow the appointment details and explicitly ask: \"Kya aap waqai yeh appointment cancel karna chahte hain?\"\n\nAfter confirmation, use the Cancel Appointment tool.\n\nConfirm the cancellation in the chat.\n\nRescheduling Flow\n\nAsk for Patient_Name and Phone.\n\nFind the existing appointment.\n\nAsk for the newly preferred Date.\n\nRun steps 2-5 of the Full Booking Logic to present new valid slots.\n\nShow the updated summary and ask for confirmation.\n\nExecute the Reschedule Appointment tool.\n\nSend the updated confirmation message.\n\n##Knowledge Base Flow##\nUse the Vector Knowledge Base for clinic info, doctor details, symptoms, services, or fees.\n\nSearch the knowledge base first. Answer ONLY from retrieved information. Do not hallucinate or use external medical knowledge.\n\nIf the answer is not found, say: \"Maaf kijiyega, mere paas filhal yeh maloomat nahi hain. Tafseelat ke liye aap clinic direct call kar sakte hain.\"\n\nAlways end by asking: \"Kya aap appointment book karna chahte hain?\"\n\n##Examples (Text/Roman Urdu)##\n\nBooking Confirmed:\n\"Appointment Confirm ho gayi hai ✅\n👤 Naam: Ahmed Khan\n👨‍⚕️ Doctor: Dr Ahmad Zia\n📅 Tareekh: 14 June 2026\n🕐 Waqt: 11:00 AM\nBarae meharbani 10 minute pehle tashreef layein.\"\n\nSlot Unavailable:\n\"Maaf kijiyega, yeh waqt dastiyab nahi hai.\n10:00 AM aur 10:20 AM available hain.\nAap ke liye kaunsa waqt behtar rahega?\"\n\nCancellation:\n\"Apki 14 June, 11:00 AM ki appointment cancel kar di gayi hai ✅\""
+          "systemMessage": "##Role & Personality##\n\n\n##Language & Modality Rules##\n\nText Input: If the patient sends a text message, you MUST reply with a TEXT message in Roman Urdu.\n\nAudio/Voice Input: If the patient sends a voice note, you MUST reply with an AUDIO/VOICE message in Urdu.\n\nStrict Constraint: Never mix these up. Never reply with text when the user specifically sent an audio/voice message.\n\n\nGreeting\nAt the start of every NEW conversation, send exactly this (in Roman Urdu text or Urdu audio, matching their input type):\n\"Assalam o Alaikum 👋 kiya haal ha apka. Kya aap appointment book karna chahte hain, ya main kisi aur tarah apki madad karoon?\"\nNever repeat this greeting in the same conversation.\n\n##Core Directives##\n\nNever double-book a slot.\n\nAlways get explicit patient confirmation before executing any booking, cancellation, or rescheduling action.\n\nAddress the patient by name once known.\n\nNever mention tool names, Google Sheets, databases, workflows, or system internals.\n\nNever call a tool speculatively. Call it only when the required parameters are gathered.\n\n##Data Mapping & Requirements##\n\nAppointments Data: You will interact with an Appointments database that tracks Appointment_id, Patient_Name, Phone, Doctor_Name, Date, Slot_Time, Status, Reason, and Confirmed.\n\nDoctor Schedule Data: You will verify availability against a schedule that tracks Doctor_name, Day, Start_time, End_time, Slot Duration, Max_Patient_Per_Slot, and Active status.\n\n##Full Booking Logic (Strict Step-by-Step)##\n\nCollect Requirements: Ask the patient for their Patient_Name, Phone, preferred Date, and a brief Reason for the visit. Ask for the Doctor_Name if the clinic has multiple doctors, otherwise assume the default. Do not ask for a time slot yet.\n\nFetch Doctor Schedule: Use the Doctor Timing tool for the requested Date's day of the week (e.g., Monday). Check that the doctor is marked Active (Yes). Note the exact Start_time, End_time, Slot Duration (e.g., 20 Minutes), and Max_Patient_Per_Slot (e.g., 3).\n\nGenerate & Validate Slots: Calculate the available slots sequentially from the Start_time adding the Slot Duration each time until the End_time. Use the Get All Appointments tool to check existing bookings for that exact Date and Doctor_Name.\n\nDetermine Availability: A slot is ONLY available if the count of existing appointments for that specific Slot_Time is strictly less than the Max_Patient_Per_Slot limit.\n\nPresent Options: Offer the patient the nearest 2 to 3 available slots in Roman Urdu text or Urdu audio. Wait for their selection. Never book automatically.\n\nConfirm: Once they select a slot, show a brief summary of the booking (Patient_Name, Doctor_Name, Date, Slot_Time, Reason) and ask for final confirmation (e.g., \"Kya main yeh appointment final kar doon?\").\n\nExecute & Notify: After confirmation, use the Appointment tool to save the record, setting Status to Confirmed. Send a final confirmation message to the patient.\n\n##Cancellation Flow##\n\nAsk for the patient's Patient_Name and Phone.\n\nUse Get All Appointments to find the active booking.\n\nShow the appointment details and explicitly ask: \"Kya aap waqai yeh appointment cancel karna chahte hain?\"\n\nAfter confirmation, use the Cancel Appointment tool.\n\nConfirm the cancellation in the chat.\n\nRescheduling Flow\n\nAsk for Patient_Name and Phone.\n\nFind the existing appointment.\n\nAsk for the newly preferred Date.\n\nRun steps 2-5 of the Full Booking Logic to present new valid slots.\n\nShow the updated summary and ask for confirmation.\n\nExecute the Reschedule Appointment tool.\n\nSend the updated confirmation message.\n\n##Knowledge Base Flow##\nUse the Vector Knowledge Base for clinic info, doctor details, symptoms, services, or fees.\n\nSearch the knowledge base first. Answer ONLY from retrieved information. Do not hallucinate or use external medical knowledge.\n\nIf the answer is not found, say: \"Maaf kijiyega, mere paas filhal yeh maloomat nahi hain. Tafseelat ke liye aap clinic direct call kar sakte hain.\"\n\nAlways end by asking: \"Kya aap appointment book karna chahte hain?\"\n\n##Examples (Text/Roman Urdu)##\n\nBooking Confirmed:\n\"Appointment Confirm ho gayi hai ✅\n👤 Naam: Ahmed Khan\n👨‍⚕️ Doctor: Dr Example\n📅 Tareekh: 14 June 2026\n🕐 Waqt: 11:00 AM\nBarae meharbani 10 minute pehle tashreef layein.\"\n\nSlot Unavailable:\n\"Maaf kijiyega, yeh waqt dastiyab nahi hai.\n10:00 AM aur 10:20 AM available hain.\nAap ke liye kaunsa waqt behtar rahega?\"\n\nCancellation:\n\"Apki 14 June, 11:00 AM ki appointment cancel kar di gayi hai ✅\""
         }
       },
       "id": "6cb12e9e-fb7f-4e61-ad44-63e33adf5881",
@@ -284,17 +267,17 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "1_8IMhLnATT6TIZ5LUQNoMzgu-rd_4famPwmEdWPjGFs",
+          "value": "",
           "mode": "list",
-          "cachedResultName": "Appointment",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_8IMhLnATT6TIZ5LUQNoMzgu-rd_4famPwmEdWPjGFs/edit?usp=drivesdk"
+          "cachedResultName": "",
+          "cachedResultUrl": ""
         },
         "sheetName": {
           "__rl": true,
-          "value": "gid=0",
+          "value": "",
           "mode": "list",
-          "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_8IMhLnATT6TIZ5LUQNoMzgu-rd_4famPwmEdWPjGFs/edit#gid=0"
+          "cachedResultName": "",
+          "cachedResultUrl": ""
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -413,7 +396,7 @@
     },
     {
       "parameters": {
-        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThis nodes allows your agent create and get data from Google Sheets\n",
+        "content": "This node group allows your agent to create and read data in Google Sheets",
         "height": 484,
         "width": 772,
         "color": 7
@@ -456,13 +439,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://graph.facebook.com/v2.5/WHATSAPP_PHONE_NUMBER_ID=your_phone_id_here/messages",
+        "url": "https://graph.facebook.com/v2.5/YOUR_PHONE_NUMBER_ID/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "WHATSAPP_API_TOKEN=your_whatsapp_token_here"
+              "value": "Bearer YOUR_WHATSAPP_ACCESS_TOKEN"
             }
           ]
         },
@@ -501,13 +484,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://graph.facebook.com/v2.5/WHATSAPP_PHONE_NUMBER_ID=your_phone_id_here/messages",
+        "url": "https://graph.facebook.com/v2.5/YOUR_PHONE_NUMBER_ID/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "WHATSAPP_API_TOKEN=your_whatsapp_token_here"
+              "value": "Bearer YOUR_WHATSAPP_ACCESS_TOKEN"
             }
           ]
         },
@@ -558,14 +541,7 @@
         0
       ],
       "id": "3175d8ab-e32a-4e82-8d74-1c383219329b",
-      "name": "Embeddings OpenAI1",
-      "credentials": {
-        "openAiApi": {
-          "id": null,
-          "name": "",
-          "__aiGatewayManaged": true
-        }
-      }
+      "name": "Embeddings OpenAI1"
     },
     {
       "parameters": {
@@ -664,31 +640,24 @@
         800
       ],
       "id": "c35aaf34-e6bf-4ca6-a6d7-ad38b2a5a32c",
-      "name": "Embeddings OpenAI",
-      "credentials": {
-        "openAiApi": {
-          "id": null,
-          "name": "",
-          "__aiGatewayManaged": true
-        }
-      }
+      "name": "Embeddings OpenAI"
     },
     {
       "parameters": {
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "1_8IMhLnATT6TIZ5LUQNoMzgu-rd_4famPwmEdWPjGFs",
+          "value": "",
           "mode": "list",
-          "cachedResultName": "Appointment",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_8IMhLnATT6TIZ5LUQNoMzgu-rd_4famPwmEdWPjGFs/edit?usp=drivesdk"
+          "cachedResultName": "",
+          "cachedResultUrl": ""
         },
         "sheetName": {
           "__rl": true,
-          "value": "gid=0",
+          "value": "",
           "mode": "list",
-          "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_8IMhLnATT6TIZ5LUQNoMzgu-rd_4famPwmEdWPjGFs/edit#gid=0"
+          "cachedResultName": "",
+          "cachedResultUrl": ""
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -789,29 +758,23 @@
         2416,
         224
       ],
-      "typeVersion": 4.7,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "wg7p6YC4ZNsUiNXx",
-          "name": "Google Sheets account"
-        }
-      }
+      "typeVersion": 4.7
     },
     {
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "1xkouUKnu56sGj4Os3PnNe6cbrJsizsCPOv8L3b7c1o4",
+          "value": "",
           "mode": "list",
-          "cachedResultName": "Doctor timing",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xkouUKnu56sGj4Os3PnNe6cbrJsizsCPOv8L3b7c1o4/edit?usp=drivesdk"
+          "cachedResultName": "",
+          "cachedResultUrl": ""
         },
         "sheetName": {
           "__rl": true,
-          "value": "gid=0",
+          "value": "",
           "mode": "list",
-          "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xkouUKnu56sGj4Os3PnNe6cbrJsizsCPOv8L3b7c1o4/edit#gid=0"
+          "cachedResultName": "",
+          "cachedResultUrl": ""
         },
         "options": {}
       },
@@ -850,13 +813,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://graph.facebook.com/v2.5/WHATSAPP_PHONE_NUMBER_ID=your_phone_id_here/messages",
+        "url": "https://graph.facebook.com/v2.5/YOUR_PHONE_NUMBER_ID/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "WHATSAPP_API_TOKEN=your_whatsapp_token_here"
+              "value": "Bearer YOUR_WHATSAPP_ACCESS_TOKEN"
             }
           ]
         },
@@ -895,7 +858,7 @@
     {
       "parameters": {
         "resource": "media",
-        "phoneNumberId": "1070717739466842",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.whatsApp",
@@ -905,8 +868,7 @@
         176
       ],
       "id": "96c0d99a-a15c-4922-910d-0ffb515cff45",
-      "name": "Upload media",
-      "webhookId": "1d1997bf-9490-45d3-8d47-0b73c67c23f3"
+      "name": "Upload media"
     },
     {
       "parameters": {
@@ -920,8 +882,8 @@
           "conditions": [
             {
               "id": "9709e9ef-a2cd-480c-bb79-7bb1becf9bce",
-              "leftValue": "",
-              "rightValue": "",
+              "leftValue": "={{ $('WhatsApp Trigger').item.json.messages[0].type }}",
+              "rightValue": "audio",
               "operator": {
                 "type": "string",
                 "operation": "equals",
@@ -940,20 +902,7 @@
         384
       ],
       "id": "53efe968-00f0-46f5-b78e-8d6944589231",
-      "name": "If"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        3056,
-        176
-      ],
-      "id": "7f0a9631-71df-46ac-93d4-e8b8ef4a87c9",
-      "name": "Code in JavaScript"
+      "name": "Was Input Audio?"
     },
     {
       "parameters": {
@@ -978,7 +927,6 @@
       "name": "Convert text to speech1"
     }
   ],
-  "pinData": {},
   "connections": {
     "OpenAI Chat Model": {
       "ai_languageModel": [
@@ -1090,7 +1038,7 @@
       "main": [
         [
           {
-            "node": "If",
+            "node": "Was Input Audio?",
             "type": "main",
             "index": 0
           }
@@ -1262,7 +1210,18 @@
         ]
       ]
     },
-    "If": {
+    "Convert text to speech1": {
+      "main": [
+        [
+          {
+            "node": "Upload media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Was Input Audio?": {
       "main": [
         [
           {
@@ -1279,28 +1238,6 @@
           }
         ]
       ]
-    },
-    "Code in JavaScript": {
-      "main": [
-        [
-          {
-            "node": "Upload media",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Convert text to speech1": {
-      "main": [
-        [
-          {
-            "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "active": false,
@@ -1308,11 +1245,5 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "c68425df-7b2f-4812-ab23-3a8ff8f8a033",
-  "meta": {
-    "instanceId": "b068737fdfca3da86bdea689dd5aecdc68a9986c3fc030f1b4c08d3923740617"
-  },
-  "nodeGroups": [],
-  "id": "cM9rvxjLZXnCAMtt",
   "tags": []
 }
